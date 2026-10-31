@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SkyFleet - Intelligent Drone Fleet Management</title>
+<style>
+:root{--bg:#0b1020;--panel:#131a30;--panel2:#18213d;--line:#27315a;--txt:#e8ecff;--mut:#8b95c4;--acc:#4f8cff;--acc2:#7c5cff;--ok:#2ecc8f;--warn:#ffb020;--bad:#ff5d6c;--cy:#22d3ee}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;background:radial-gradient(1200px 600px at 80% -10%,#1b2a66 0,transparent 60%),var(--bg);color:var(--txt);min-height:100vh;display:flex}
+aside{width:230px;background:linear-gradient(180deg,#0f1630,#0b1020);border-right:1px solid var(--line);padding:22px 14px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:6px}
+.logo{display:flex;align-items:center;gap:10px;margin:0 8px 18px}
+.logo .mark{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,var(--acc),var(--acc2));display:grid;place-items:center;font-size:20px;box-shadow:0 6px 18px #4f8cff55}
+.logo b{display:block;font-size:17px;letter-spacing:.3px}.logo small{color:var(--mut);font-size:11px}
+nav button{width:100%;text-align:left;background:none;border:0;color:var(--mut);padding:11px 12px;border-radius:10px;font-size:14px;cursor:pointer;display:flex;gap:10px;align-items:center;transition:.15s}
+nav button:hover{background:#ffffff0d;color:var(--txt)}
+nav button.on{background:linear-gradient(90deg,#4f8cff33,#7c5cff1f);color:#fff;box-shadow:inset 3px 0 0 var(--acc)}
+.sp{flex:1}.side-foot{font-size:11px;color:var(--mut);padding:8px;line-height:1.5}
+main{flex:1;padding:22px 28px 40px;min-width:0}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;gap:12px;flex-wrap:wrap}
+h1{font-size:23px}h1 span{color:var(--mut);font-weight:400;font-size:14px;margin-left:8px}
+.live{display:flex;align-items:center;gap:8px;color:var(--mut);font-size:13px}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 0 #2ecc8f99;animation:pulse 1.8s infinite}
+@keyframes pulse{70%{box-shadow:0 0 0 9px #2ecc8f00}100%{box-shadow:0 0 0 0 #2ecc8f00}}
+.grid{display:grid;gap:16px}.stats{grid-template-columns:repeat(5,1fr)}
+.card{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:16px;padding:16px 18px;box-shadow:0 10px 30px #00000040}
+.stat{position:relative;overflow:hidden}.stat .n{font-size:36px;font-weight:700;margin-top:4px}.stat .l{color:var(--mut);font-size:13px}
+.stat::after{content:"";position:absolute;right:-20px;top:-20px;width:90px;height:90px;border-radius:50%;background:var(--c);opacity:.18}
+.stat .ic{position:absolute;right:14px;top:12px;font-size:20px;opacity:.9}
+h3{font-size:15px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+h3 small{color:var(--mut);font-weight:400;font-size:12px}
+.two{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)}.mt{margin-top:16px}
+canvas{width:100%;display:block;border-radius:12px;background:radial-gradient(circle at 30% 20%,#1a2650,#0e1530)}
+.drones{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
+.dr{background:#0e1530;border:1px solid var(--line);border-radius:14px;padding:12px}
+.dr .top{display:flex;justify-content:space-between;align-items:center;font-weight:600}
+.dr .meta{color:var(--mut);font-size:12px;margin:4px 0 8px}
+.bar{height:8px;background:#222c55;border-radius:99px;overflow:hidden}.bar i{display:block;height:100%;border-radius:99px;transition:width .6s}
+.chip{font-size:11px;padding:3px 9px;border-radius:99px;font-weight:600;letter-spacing:.3px}
+.AVAILABLE{background:#2ecc8f22;color:var(--ok)}.BUSY,.ASSIGNED{background:#ffb02022;color:var(--warn)}.CHARGING,.PENDING{background:#ff5d6c22;color:var(--bad)}.COMPLETED{background:#4f8cff22;color:var(--acc)}
+.URGENT{background:#ff5d6c22;color:var(--bad)}.NORMAL{background:#4f8cff22;color:var(--acc)}.LOW{background:#8b95c422;color:var(--mut)}
+.mini{display:flex;gap:8px;margin-top:10px}
+button.b{background:#ffffff10;border:1px solid var(--line);color:var(--txt);padding:7px 12px;border-radius:9px;cursor:pointer;font-size:12.5px;transition:.15s}
+button.b:hover{background:#ffffff1c;border-color:#4f8cff88}
+button.p{background:linear-gradient(135deg,var(--acc),var(--acc2));border:0;color:#fff;padding:10px 16px;border-radius:10px;font-weight:600;cursor:pointer;font-size:13.5px;box-shadow:0 6px 16px #4f8cff44}
+button.p:hover{filter:brightness(1.1)}
+.form{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;align-items:end}
+label{font-size:11.5px;color:var(--mut);display:flex;flex-direction:column;gap:5px}
+input,select{background:#0e1530;border:1px solid var(--line);color:var(--txt);padding:9px 10px;border-radius:9px;font-size:13.5px;outline:none}
+input:focus,select:focus{border-color:var(--acc)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{color:var(--mut);text-align:left;font-weight:500;padding:8px 10px;border-bottom:1px solid var(--line);font-size:12px;white-space:nowrap}
+td{padding:9px 10px;border-bottom:1px solid #1d2748}
+tr:hover td{background:#ffffff06}
+.tw{overflow-x:auto}
+pre{background:#0a0f22;border:1px solid var(--line);border-radius:12px;padding:14px;font:12.5px/1.5 Consolas,"Cascadia Mono",monospace;color:#cfe0ff;overflow:auto;max-height:520px;white-space:pre}
+.log{max-height:300px;overflow:auto;font-size:12.5px}
+.log div{padding:7px 0;border-bottom:1px solid #1d2748;color:#c8d2ff}
+.q{display:flex;flex-direction:column;gap:8px}
+.qi{display:flex;align-items:center;gap:10px;background:#0e1530;border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:13px}
+.qi b{color:var(--cy)}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.tab{display:none}.tab.on{display:block;animation:fade .25s}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1}}
+#toast{position:fixed;right:22px;bottom:22px;background:#18213d;border:1px solid var(--line);padding:12px 18px;border-radius:12px;box-shadow:0 12px 30px #0008;transform:translateY(90px);opacity:0;transition:.3s;z-index:9;max-width:380px;font-size:13.5px}
+#toast.show{transform:none;opacity:1}#toast.err{border-color:var(--bad);color:#ffb3bb}
+.legend{display:flex;gap:16px;color:var(--mut);font-size:12px;margin-top:10px;flex-wrap:wrap}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.res{margin-top:10px;color:var(--cy);font-size:13px;min-height:18px}
+@media(max-width:1100px){.stats{grid-template-columns:repeat(2,1fr)}.two{grid-template-columns:1fr}aside{display:none}}
+</style>
+</head>
+<body>
+<aside>
+  <div class="logo"><div class="mark">&#9992;</div><div><b>SkyFleet</b><small>Drone Fleet Management</small></div></div>
+  <nav id="nav">
+    <button data-t="dash" class="on">&#9638; Dashboard</button>
+    <button data-t="deliv">&#128230; Deliveries</button>
+    <button data-t="net">&#128506; Route Network</button>
+    <button data-t="rec">&#127795; Drone Records (BST)</button>
+    <button data-t="dp">&#9881; Optimization (DP)</button>
+    <button data-t="bt">&#129517; Backtracking / B&amp;B</button>
+    <button data-t="an">&#128202; Analysis</button>
+  </nav>
+  <div class="sp"></div>
+  <div class="side-foot">Java DSA engine (BST, Heap, Graph, DP, B&amp;B)<br>served from your laptop - simulation only.</div>
+</aside>
+<main>
+<header>
+  <h1>Intelligent Drone Fleet Management <span>DSA-II project</span></h1>
+  <div class="live"><span class="dot"></span> Live &middot; <span id="clock"></span>
+    <button class="b" id="btnDemo">&#9654; Run demo scenario</button>
+    <button class="b" id="btnReset">&#8635; Reset</button></div>
+</header>
+
+<!-- DASHBOARD -->
+<section class="tab on" id="t-dash">
+  <div class="grid stats">
+    <div class="card stat" style="--c:#4f8cff"><span class="ic">&#128640;</span><div class="l">Total drones</div><div class="n" id="s-total">0</div></div>
+    <div class="card stat" style="--c:#2ecc8f"><span class="ic">&#9989;</span><div class="l">Available</div><div class="n" id="s-available">0</div></div>
+    <div class="card stat" style="--c:#ffb020"><span class="ic">&#128746;</span><div class="l">Active deliveries</div><div class="n" id="s-active">0</div></div>
+    <div class="card stat" style="--c:#ff5d6c"><span class="ic">&#9203;</span><div class="l">Pending queue</div><div class="n" id="s-pending">0</div></div>
+    <div class="card stat" style="--c:#7c5cff"><span class="ic">&#127937;</span><div class="l">Completed</div><div class="n" id="s-completed">0</div></div>
+  </div>
+  <div class="grid two mt">
+    <div class="card"><h3>Live route map <small>drones fly along their Dijkstra routes</small></h3>
+      <canvas id="map"></canvas>
+      <div class="legend"><span><i style="background:#4f8cff"></i>Location</span><span><i style="background:#ffb020"></i>Drone on mission</span><span><i style="background:#2ecc8f"></i>Idle drone</span><span id="ovLegend"></span></div>
+    </div>
+    <div class="card"><h3>Pending queue <small>max-heap by priority</small></h3><div class="q" id="queue"></div>
+      <h3 class="mt">Activity log</h3><div class="log" id="log"></div></div>
+  </div>
+  <div class="card mt"><h3>Fleet <small>stored in a Binary Search Tree, keyed by drone ID</small></h3><div class="drones" id="fleet"></div></div>
+</section>
+
+<!-- DELIVERIES -->
+<section class="tab" id="t-deliv">
+  <div class="card"><h3>Create delivery request</h3>
+    <div class="form">
+      <label>From<select id="f-from"></select></label>
+      <label>To<select id="f-to"></select></label>
+      <label>Weight (kg)<input id="f-kg" type="number" step="0.5" min="0.1" value="1.5"></label>
+      <label>Priority<select id="f-pr"><option value="3">3 - Urgent</option><option value="2" selected>2 - Normal</option><option value="1">1 - Low</option></select></label>
+      <button class="p" id="btnCreate">Create &amp; auto-assign</button>
+    </div>
+    <p class="res" id="createRes"></p>
+    <p style="color:var(--mut);font-size:12.5px;margin-top:6px">Greedy assignment: nearest AVAILABLE drone to the pickup that has enough capacity and battery (1.5% per km + 15% reserve). If none, the request waits in the priority queue.</p>
+  </div>
+  <div class="card mt"><h3>All deliveries <button class="b" id="btnRedispatch">Re-dispatch pending</button></h3>
+    <div class="tw"><table><thead><tr><th>ID</th><th>From</th><th>To</th><th>Kg</th><th>Priority</th><th>Status</th><th>Drone</th><th>Km</th><th>Battery</th><th>Route</th><th></th></tr></thead><tbody id="dtable"></tbody></table></div></div>
+</section>
+
+<!-- NETWORK -->
+<section class="tab" id="t-net">
+  <div class="card"><h3>Route network algorithms (Unit 2)</h3>
+    <div class="form" style="margin-bottom:12px"><label>Source<select id="n-from"></select></label><label>Destination<select id="n-to"></select></label></div>
+    <div class="btns" id="netBtns">
+      <button class="b" data-k="bfs">BFS</button><button class="b" data-k="dfs">DFS</button><button class="b" data-k="components">Components</button>
+      <button class="b" data-k="spanning">DFS Spanning Tree</button><button class="b" data-k="prim">Prim MST</button><button class="b" data-k="kruskal">Kruskal MST</button>
+      <button class="b" data-k="dijkstra">Dijkstra (S to D)</button><button class="b" data-k="bellman">Bellman-Ford</button><button class="b" data-k="floyd">Floyd-Warshall</button>
+      <button class="b" data-k="closure">Transitive Closure</button><button class="b" data-k="matrix">Matrix / List</button><button class="b" data-k="clear">Clear highlight</button>
+    </div>
+    <canvas id="map2"></canvas>
+    <div class="res" id="netRes"></div>
+    <pre id="netOut" style="margin-top:12px;display:none"></pre>
+  </div>
+</section>
+
+<!-- RECORDS -->
+<section class="tab" id="t-rec">
+  <div class="grid two">
+    <div class="card"><h3>Add drone</h3>
+      <div class="form">
+        <label>ID<input id="a-id" type="number" placeholder="106"></label><label>Model<input id="a-model" value="Falcon-X"></label>
+        <label>Battery %<input id="a-bat" type="number" value="100"></label><label>Capacity kg<input id="a-cap" type="number" step="0.5" value="3"></label>
+        <label>Base<select id="a-loc"></select></label><button class="p" id="btnAdd">Add (BST insert)</button>
+      </div></div>
+    <div class="card"><h3>Search / delete / traverse</h3>
+      <div class="form"><label>Drone ID<input id="s-id" placeholder="104"></label>
+        <button class="b" id="btnSearch">Search</button><button class="b" id="btnDelete">Delete</button></div>
+      <div class="btns" style="margin-top:12px"><button class="b" data-o="in">In-order</button><button class="b" data-o="pre">Pre-order</button><button class="b" data-o="post">Post-order</button></div>
+      <div class="res" id="recRes"></div></div>
+  </div>
+  <div class="card mt"><h3>Drone records <small>in-order = sorted by ID</small></h3>
+    <div class="tw"><table><thead><tr><th>ID</th><th>Model</th><th>Battery</th><th>Capacity</th><th>Location</th><th>Status</th><th></th></tr></thead><tbody id="rtable"></tbody></table></div></div>
+</section>
+
+<section class="tab" id="t-dp"><div class="card"><h3>Dynamic Programming (Unit 3)</h3><div class="btns" id="dpBtns">
+  <button class="b" data-a="knapsack">0/1 Knapsack (payload)</button><button class="b" data-a="lcs">LCS (flight plans)</button>
+  <button class="b" data-a="matrixchain">Matrix Chain</button><button class="b" data-a="resource">Resource Allocation</button></div><pre id="dpOut">Choose an algorithm above.</pre></div></section>
+<section class="tab" id="t-bt"><div class="card"><h3>Backtracking and Branch &amp; Bound (Unit 4)</h3><div class="btns" id="btBtns">
+  <button class="b" data-a="tsp">TSP (Branch &amp; Bound)</button><button class="b" data-a="coloring">Graph Colouring</button><button class="b" data-a="nqueens">N-Queens</button>
+  <button class="b" data-a="hamiltonian">Hamiltonian Cycle</button><button class="b" data-a="subsets">Sum of Subsets</button></div><pre id="btOut">Choose an algorithm above.</pre></div></section>
+<section class="tab" id="t-an"><div class="card"><h3>Analysis</h3><div class="btns" id="anBtns">
+  <button class="b" data-a="complexity">Complexity table</button><button class="b" data-a="heapsort">Heap sort (battery)</button><button class="b" data-a="avl">BST vs AVL</button><button class="b" data-a="unit5">Unit 5 comparison</button></div><pre id="anOut">Choose an item above.</pre></div></section>
+</main>
+<div id="toast"></div>
+
+<script>
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+let S = null, overlay = null;
+const POS = {Hub:[90,220],A:[230,90],B:[230,350],C:[420,350],D:[420,90],E:[570,220],F:[700,110],G:[700,330]};
+
+async function api(path, params) {
+  const qs = params ? '?' + new URLSearchParams(params) : '';
+  const r = await fetch('/api/' + path + qs);
+  const j = await r.json();
+  if (!r.ok || j.error) throw new Error(j.error || 'Request failed');
+  return j;
+}
+function toast(msg, err) {
+  const t = $('#toast'); t.textContent = msg; t.className = 'show' + (err ? ' err' : '');
+  clearTimeout(toast.h); toast.h = setTimeout(() => t.className = '', 3200);
+}
+async function act(path, params, msg) {
+  try { const j = await api(path, params); await refresh(); if (msg) toast(msg); return j; }
+  catch (e) { toast(e.message, true); }
+}
+async function refresh() { S = await api('state'); render(); }
+
+function chip(c, t) { return `<span class="chip ${c}">${t || c}</span>`; }
+function batColor(b) { return b >= 60 ? 'var(--ok)' : b >= 30 ? 'var(--warn)' : 'var(--bad)'; }
+
+function render() {
+  for (const k of ['total','available','active','pending','completed']) $('#s-' + k).textContent = S.stats[k];
+  $('#fleet').innerHTML = S.drones.map(d => `
+    <div class="dr"><div class="top"><span>&#9992; ${d.label}</span>${chip(d.status)}</div>
+    <div class="meta">${d.model} &middot; ${d.cap} kg &middot; @${d.loc}</div>
+    <div class="bar"><i style="width:${d.battery}%;background:${batColor(d.battery)}"></i></div>
+    <div class="meta" style="margin:6px 0 0">Battery ${d.battery}%</div>
+    <div class="mini"><button class="b" onclick="act('charge',{id:${d.id}},'${d.label} charged')">Charge</button></div></div>`).join('');
+  const byId = Object.fromEntries(S.deliveries.map(d => [d.id, d]));
+  $('#queue').innerHTML = S.queue.length ? S.queue.map((id, i) => { const d = byId[id];
+    return `<div class="qi"><b>#${i + 1}</b> Delivery ${d.id}: ${d.from} &rarr; ${d.to} ${chip(d.priorityName)} <span style="margin-left:auto;color:var(--mut)">${d.kg} kg</span></div>`; }).join('')
+    : '<div style="color:var(--mut);font-size:13px">Queue is empty.</div>';
+  $('#log').innerHTML = S.log.length ? S.log.map(l => `<div>${l}</div>`).join('') : '<div style="color:var(--mut)">No activity yet. Create a delivery or run the demo scenario.</div>';
+  $('#dtable').innerHTML = S.deliveries.length ? S.deliveries.slice().reverse().map(d => `<tr>
+    <td>#${d.id}</td><td>${d.from}</td><td>${d.to}</td><td>${d.kg}</td><td>${chip(d.priorityName)}</td><td>${chip(d.status)}</td>
+    <td>${d.drone < 0 ? '-' : 'D' + d.drone}</td><td>${d.status === 'PENDING' ? '-' : d.km}</td><td>${d.status === 'PENDING' ? '-' : d.battery + '%'}</td>
+    <td style="color:var(--mut)">${d.route}</td>
+    <td>${d.status === 'ASSIGNED' ? `<button class="b" onclick="act('complete',{id:${d.id}},'Delivery #${d.id} completed')">Complete</button>` : ''}</td></tr>`).join('')
+    : '<tr><td colspan="11" style="color:var(--mut)">No deliveries yet.</td></tr>';
+  $('#rtable').innerHTML = S.drones.map(d => `<tr><td>${d.label}</td><td>${d.model}</td><td>${d.battery}%</td><td>${d.cap} kg</td><td>${d.loc}</td><td>${chip(d.status)}</td>
+    <td><button class="b" onclick="act('charge',{id:${d.id}},'${d.label} charged')">Charge</button></td></tr>`).join('');
+  fillSelects();
+}
+let filled = false;
+function fillSelects() {
+  if (filled) return; filled = true;
+  const opts = S.graph.nodes.map(n => `<option>${n}</option>`).join('');
+  for (const id of ['#f-from', '#f-to', '#n-from', '#n-to', '#a-loc']) $(id).innerHTML = opts;
+  $('#f-to').value = 'E'; $('#n-to').value = 'E';
+}
+
+/* ---------------- map drawing ---------------- */
+function drawMap(cv) {
+  if (!S) return;
+  const W = 800, H = 440, dpr = window.devicePixelRatio || 1;
+  const cw = cv.clientWidth; if (!cw) return;
+  const ch = Math.round(cw * H / W);
+  if (cv.width !== Math.round(cw * dpr)) { cv.width = Math.round(cw * dpr); cv.height = Math.round(ch * dpr); cv.style.height = ch + 'px'; }
+  const x = cv.getContext('2d'), k = cv.width / W, t = performance.now() / 1000;
+  x.setTransform(k, 0, 0, k, 0, 0);
+  x.clearRect(0, 0, W, H);
+  const ek = (a, b) => [a, b].sort().join('|');
+  const ov = overlay ? new Set(overlay.edges.map(e => ek(e.u, e.v))) : new Set();
+  x.font = '600 12px Segoe UI, Arial'; x.textAlign = 'center';
+  for (const e of S.graph.edges) {
+    const a = POS[e.u], b = POS[e.v], hl = ov.has(ek(e.u, e.v));
+    x.beginPath(); x.moveTo(...a); x.lineTo(...b);
+    if (hl) { x.strokeStyle = overlay.color; x.lineWidth = 5; x.shadowColor = overlay.color; x.shadowBlur = 14; x.setLineDash([12, 8]); x.lineDashOffset = -t * 30; }
+    else { x.strokeStyle = '#3a4a85'; x.lineWidth = 2; x.shadowBlur = 0; x.setLineDash([]); }
+    x.stroke(); x.shadowBlur = 0; x.setLineDash([]);
+    const mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
+    x.fillStyle = '#0e1530'; x.beginPath(); x.arc(mx, my, 11, 0, 7); x.fill();
+    x.fillStyle = hl ? '#fff' : '#9fb0ee'; x.fillText(e.w, mx, my + 4);
+  }
+  const ovn = overlay ? new Set(overlay.nodes) : new Set();
+  for (const n of S.graph.nodes) {
+    const [px, py] = POS[n], hl = ovn.has(n);
+    const g = x.createRadialGradient(px - 6, py - 8, 3, px, py, 24);
+    g.addColorStop(0, hl ? '#ffffff' : '#7fb0ff'); g.addColorStop(1, hl ? overlay.color : '#2f5fd0');
+    x.shadowColor = hl ? overlay.color : '#4f8cff'; x.shadowBlur = hl ? 20 : 10;
+    x.fillStyle = g; x.beginPath(); x.arc(px, py, 22, 0, 7); x.fill(); x.shadowBlur = 0;
+    x.fillStyle = hl ? '#0b1020' : '#fff'; x.font = '700 13px Segoe UI, Arial'; x.fillText(n, px, py + 5);
+  }
+  // idle drones parked at their location
+  const park = {};
+  for (const d of S.drones) if (d.status !== 'BUSY') (park[d.loc] = park[d.loc] || []).push(d);
+  for (const [n, ds] of Object.entries(park)) ds.forEach((d, i) => {
+    const [px, py] = POS[n]; const ox = px - 26 + i * 26, oy = py + 40;
+    x.fillStyle = d.status === 'AVAILABLE' ? '#2ecc8f' : '#ff5d6c'; x.beginPath(); x.arc(ox, oy, 5, 0, 7); x.fill();
+    x.fillStyle = '#b8c4f5'; x.font = '10px Segoe UI, Arial'; x.fillText(d.label, ox, oy + 15);
+  });
+  // flying drones along delivery routes
+  if (cv.id === 'map') for (const d of S.deliveries) {
+    if (d.status !== 'ASSIGNED') continue;
+    const names = d.route.split('>').filter((n, i, a) => i === 0 || n !== a[i - 1]);
+    const pts = names.map(n => POS[n]).filter(Boolean); if (pts.length < 2) continue;
+    let tot = 0; const seg = [];
+    for (let i = 0; i + 1 < pts.length; i++) { const l = Math.hypot(pts[i+1][0]-pts[i][0], pts[i+1][1]-pts[i][1]); seg.push(l); tot += l; }
+    x.strokeStyle = '#ffb02055'; x.lineWidth = 3; x.setLineDash([4, 6]); x.beginPath(); x.moveTo(...pts[0]); pts.slice(1).forEach(p => x.lineTo(...p)); x.stroke(); x.setLineDash([]);
+    let dist = ((t * 70 + d.id * 90) % (tot + 60)); dist = Math.min(dist, tot);
+    let i = 0; while (i < seg.length - 1 && dist > seg[i]) { dist -= seg[i]; i++; }
+    const f = seg[i] ? dist / seg[i] : 0, px = pts[i][0] + (pts[i+1][0] - pts[i][0]) * f, py = pts[i][1] + (pts[i+1][1] - pts[i][1]) * f;
+    x.shadowColor = '#ffb020'; x.shadowBlur = 18; x.fillStyle = '#ffb020'; x.beginPath(); x.arc(px, py, 8, 0, 7); x.fill(); x.shadowBlur = 0;
+    x.fillStyle = '#ffd98a'; const sp = Math.sin(t * 25) * 3;
+    for (const [dx, dy] of [[-10,-10],[10,-10],[-10,10],[10,10]]) { x.beginPath(); x.arc(px + dx, py + dy, 4 + Math.abs(sp) * .3, 0, 7); x.fill(); }
+    x.fillStyle = '#fff'; x.font = '700 11px Segoe UI, Arial'; x.fillText('D' + d.drone, px, py - 20);
+  }
+}
+function loop() { drawMap($('#map')); if ($('#t-net').classList.contains('on')) drawMap($('#map2')); requestAnimationFrame(loop); }
+
+/* ---------------- interactions ---------------- */
+$('#nav').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  $$('#nav button').forEach(x => x.classList.toggle('on', x === b));
+  $$('.tab').forEach(t => t.classList.toggle('on', t.id === 't-' + b.dataset.t));
+});
+$('#btnCreate').onclick = async () => {
+  const j = await act('delivery', { from: $('#f-from').value, to: $('#f-to').value, kg: $('#f-kg').value, priority: $('#f-pr').value });
+  if (j) { $('#createRes').textContent = j.status === 'ASSIGNED' ? 'Delivery #' + j.id + ' assigned to a drone.' : 'Delivery #' + j.id + ' queued - no drone can serve it right now.'; toast($('#createRes').textContent); }
+};
+$('#btnRedispatch').onclick = async () => { const j = await act('dispatch'); if (j) toast(j.assigned + ' pending delivery(ies) assigned'); };
+$('#btnReset').onclick = async () => { overlay = null; await act('reset', null, 'Fleet reset to sample data'); };
+$('#btnDemo').onclick = async () => {
+  const seq = [['Hub','E',2,3],['A','C',1,1],['B','D',5.5,2],['Hub','D',1,2],['B','A',1,2],['Hub','C',1,3],['Hub','A',1,1]];
+  for (const [f, t, kg, p] of seq) { await act('delivery', { from: f, to: t, kg, priority: p }); await new Promise(r => setTimeout(r, 450)); }
+  toast('Demo loaded: all drones busy, 2 deliveries waiting. Complete #1 to see the URGENT one dispatched first.');
+};
+$('#btnAdd').onclick = () => act('drone/add', { id: $('#a-id').value, model: $('#a-model').value, battery: $('#a-bat').value, cap: $('#a-cap').value, loc: $('#a-loc').value }, 'Drone added to BST');
+$('#btnSearch').onclick = async () => { try { const j = await api('drone/search', { id: $('#s-id').value }); $('#recRes').textContent = j.found ? 'Found: ' + j.text : 'Not found.'; } catch (e) { toast(e.message, true); } };
+$('#btnDelete').onclick = () => act('drone/delete', { id: $('#s-id').value }, 'Drone deleted from BST');
+$$('[data-o]').forEach(b => b.onclick = async () => { const j = await api('drone/traverse', { order: b.dataset.o });
+  $('#recRes').textContent = b.textContent + ': ' + j.order.join('  ') + '   (tree height ' + j.height + ')'; });
+for (const [id, out] of [['#dpBtns', '#dpOut'], ['#btBtns', '#btOut'], ['#anBtns', '#anOut']])
+  $(id).addEventListener('click', async e => { const b = e.target.closest('button'); if (!b) return;
+    try { const j = await api('algo', { name: b.dataset.a }); $(out).textContent = j.text; } catch (er) { toast(er.message, true); } });
+
+$('#netBtns').addEventListener('click', async e => {
+  const b = e.target.closest('button'); if (!b) return; const k = b.dataset.k;
+  const res = $('#netRes'), out = $('#netOut');
+  if (k === 'clear') { overlay = null; res.textContent = ''; out.style.display = 'none'; $('#ovLegend').innerHTML = ''; return; }
+  try {
+    const j = await api('route', { kind: k, from: $('#n-from').value, to: $('#n-to').value });
+    out.style.display = 'none'; res.textContent = ''; overlay = null;
+    if (j.text) { out.textContent = j.text; out.style.display = 'block'; return; }
+    if (j.order) { res.textContent = j.title + ': ' + j.order.join(' > '); overlay = { edges: [], nodes: j.order, color: '#22d3ee' }; }
+    else if (j.groups) { res.textContent = j.title + ' (' + j.groups.length + '): ' + j.groups.map(g => '{' + g.join(', ') + '}').join('  '); overlay = { edges: [], nodes: j.groups[0], color: '#2ecc8f' }; }
+    else if (j.edges) { res.textContent = j.title + ': ' + j.edges.map(e => e.u + '-' + e.v + '(' + e.w + ')').join('  ') + (j.cost >= 0 ? '   TOTAL = ' + j.cost + ' km' : '');
+      overlay = { edges: j.edges, nodes: j.edges.flatMap(e => [e.u, e.v]), color: j.cost >= 0 ? '#2ecc8f' : '#ffb020' }; }
+    else if (j.path) { res.textContent = j.path.length ? j.title + ': ' + j.path.join(' > ') + '  =  ' + j.distance + ' km' : 'No route between these locations.';
+      const es = []; for (let i = 0; i + 1 < j.path.length; i++) es.push({ u: j.path[i], v: j.path[i + 1] });
+      overlay = { edges: es, nodes: j.path, color: '#ff5d6c' };
+      out.textContent = 'Shortest distances from ' + $('#n-from').value + ':\n' + Object.entries(j.dists).map(([n, d]) => '  ' + n.padEnd(4) + (d < 0 ? 'unreachable' : d + ' km')).join('\n'); out.style.display = 'block'; }
+  } catch (er) { toast(er.message, true); }
+});
+
+setInterval(() => $('#clock').textContent = new Date().toLocaleTimeString(), 1000);
+setInterval(() => refresh().catch(() => {}), 4000);
+refresh().then(loop).catch(e => toast('Cannot reach the Java server: ' + e.message, true));
+</script>
+</body>
+</html>
